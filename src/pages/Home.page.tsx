@@ -8,6 +8,9 @@ type IfcClassificationReferenceType = 'IfcClassificationReference';
 type IfcClassificationType = 'IfcClassification';
 type IfcMaterialType = 'IfcMaterial';
 
+declare var bsddBridge: any;
+
+
 export interface IfcProduct {
     type: string;
     name: string;
@@ -205,6 +208,14 @@ export function BsddCard(props: { item: IfcProduct, class: any }) {
         if (text.length <= maxLength) return text
         return text.substring(0, maxLength) + "..."
     }
+    function bsddSearchClick(ifcProduct: IfcProduct) {
+        // const ifcObjectTest: string =
+        //   "{type: 'IfcSlab', name: 'Floor: 23_FL_AT_breedplaatvloer_200 (C35/45)', description: 'breedplaatvloer',predefinedType:'FLOOR'}";
+
+        bsddBridge.bsddSearch(JSON.stringify(ifcProduct)).then(function (actualResult) {
+            console.log('Sent to Revit');
+        });
+    }
 
     return <Card key={props.item.name}>
         <Group align={"flex-start"} justify={"space-between"}>
@@ -230,6 +241,7 @@ export function BsddCard(props: { item: IfcProduct, class: any }) {
                 </HoverCard>
                 <Tooltip label={"Select all instances"}>
                     <ActionIcon radius={"xl"}
+                                onClick={() => bsddSearchClick(props.item)}
                     color={"blue"}>
                         <IconSearch size={18}/>
                     </ActionIcon>
@@ -391,6 +403,14 @@ function CategoryCollapse(props: CategoryCollapseProps) {
 
 
 export function HomePage() {
+    const [state, setState] = useState({});
+
+    // @ts-ignore
+    window.updateSelection = (jsonString) => {
+        const newState = JSON.parse(jsonString);
+        setState(newState);
+    };
+
     // State for the fetched data
     const [data, setData] = useState<BimBasisObjectsResponse>();
     // State to handle loading status
