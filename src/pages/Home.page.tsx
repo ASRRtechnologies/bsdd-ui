@@ -1,19 +1,32 @@
 import {ColorSchemeToggle} from '../components/ColorSchemeToggle/ColorSchemeToggle';
-import {Button, Card, Collapse, Container, Group, Indicator, Stack} from "@mantine/core";
+import {
+    ActionIcon,
+    Button,
+    Card,
+    Collapse,
+    Container,
+    Group,
+    HoverCard,
+    Indicator,
+    SimpleGrid,
+    Stack,
+    Text
+} from "@mantine/core";
 import React, {useEffect, useState} from "react";
-import {IconCheck, IconStereoGlasses} from "@tabler/icons-react";
+import {IconCheck, IconInbox, IconInfoCircle, IconStereoGlasses} from "@tabler/icons-react";
 // import CategoryCollapse from "../components/CategoryCollapse";
 
-type IfcSlabTypeType = 'IfcSlabType';
+
+type IfcProductType = 'IfcProduct';
 type IfcClassificationReferenceType = 'IfcClassificationReference';
 type IfcClassificationType = 'IfcClassification';
 type IfcMaterialType = 'IfcMaterial';
 
-export interface IfcSlabType {
+export interface IfcProduct {
     type: string;
     name: string;
     description: string;
-    predefinedType: 'FLOOR' | 'DOOR';
+    predefinedType: string;
     hasAssociations?: Association[];
 }
 
@@ -38,7 +51,6 @@ interface IfcMaterial {
     name: string;
     description: string;
 }
-
 
 // response
 
@@ -68,7 +80,7 @@ export interface BimBasisObjectsResponse {
     lastUpdatedUtc: string;
 }
 
-const mockData: IfcSlabType[] = [
+const mockData: IfcProduct[] = [
     {
         "type": "IfcSlab",
         "name": "Floor: 23_FL_AT_breedplaatvloer_260 (C35/45)",
@@ -107,7 +119,7 @@ const mockData: IfcSlabType[] = [
     },
     {
         "type": "IfcSlab",
-        "name": "Floor: 23_FL_AT_breedplaatvloer_400 (C35/45) (oranje)",
+        "name": "Floor: 23_FL_AT_breedplaatvloer_400 (C35/45) (oranje) dfsjaf;j;ajslf;jlfdsaj sdfajklfaljksjlkdf fsdalkfjsadljkfjlk aslkdjfjlkasdfljkadsjlk asfljkflsdjkljkafsd asdflkfsajkl",
         "description": "breedplaatvloer",
         "predefinedType": "FLOOR",
         "hasAssociations": [
@@ -167,17 +179,17 @@ function groupBy(array, property) {
     }, {}); // Initial value is an empty object
 }
 
-export function BsddCard(props: { item: IfcSlabType, class: any }) {
+export function BsddCard(props: { item: IfcProduct, class: any }) {
     let color = "blue"
 
     if (!props.class) color = "red"
 
-    function determineColor(item: IfcSlabType, found: any) {
-        const ifcClassificatonReference =  item.hasAssociations?.filter(it => it.type === "IfcClassificationReference")
+    function determineColor(item: IfcProduct, found: any) {
+        const ifcClassificatonReference = item.hasAssociations?.filter(it => it.type === "IfcClassificationReference")
 
         if (!ifcClassificatonReference) return "orange"
 
-        for(let classRelation in found.classRelations) {
+        for (let classRelation in found.classRelations) {
             // @ts-ignore
             console.log(classRelation.relatedClassUri, ifcClassificatonReference.location, classRelation.relatedClassUri === ifcClassificatonReference.location)
             // @ts-ignore
@@ -185,25 +197,39 @@ export function BsddCard(props: { item: IfcSlabType, class: any }) {
         }
 
         return "red"
-
-
-        // if (found.)
-
     }
 
     if (props.class) color = determineColor(props.item, props.class)
 
-    return <Card key={props.item.name} my={"xs"}>
-        <Group>
-            <Indicator color={color} size={18} mx={"xs"}/>
-            <Button color={"blue"} leftSection={<IconStereoGlasses/>}>View</Button>
-            <Button color={"red"} leftSection={<IconCheck/>}>
-                Apply
-            </Button>
-            <div>
-                {props.item.name}
-            </div>
+    function truncateText(text: String, maxLength: number): String {
+        if (text.length <= maxLength) return text
+        return text.substring(0, maxLength) + "..."
+    }
 
+    return <Card key={props.item.name}>
+        <Group align={"flex-start"}>
+            <Group my={"auto"}>
+                <Indicator color={color} size={18} mx={"xs"}/>
+
+            </Group>
+            <Text>
+                <HoverCard>
+                    <HoverCard.Target>
+                        <Group>
+                            <div>{truncateText(props.item.name, 50)}</div>
+                            <IconInfoCircle/>
+                        </Group>
+                    </HoverCard.Target>
+                    <HoverCard.Dropdown>
+                        {props.item.name}
+                    </HoverCard.Dropdown>
+
+                </HoverCard>
+            </Text>
+            <ActionIcon color={"blue"} size={"md"}><IconStereoGlasses/></ActionIcon>
+            <ActionIcon color={"red"}>
+                <IconCheck/>
+            </ActionIcon>
 
             {/*<pre>*/}
             {/*{JSON.stringify(props.class, null, 2)}*/}
@@ -260,7 +286,7 @@ interface CategoryCollapseProps {
     category: string;
     opened: Record<string, boolean>;
     bbbr: BimBasisObjectsResponse;
-    items: IfcSlabType[];
+    items: IfcProduct[];
 }
 
 function CategoryCollapse(props: CategoryCollapseProps) {
@@ -417,23 +443,19 @@ export function HomePage() {
 
     return (
         <>
-            <ColorSchemeToggle/>
             <Container size={"40rem"}>
-                <Stack>
+                <Stack gap={"xs"}>
                     <h1>IFC Slab Types</h1>
                     {/* Iterate over grouped object */}
                     {Object.entries(grouped).map(([category, items]) => (
-                        <div key={category}>
-                            {/* Clickable header to toggle the Collapse component */}
-                            <h2 style={{cursor: 'pointer'}} onClick={() => handleCollapseToggle(category)}>
-                                {category} {/* You can add an icon here to indicate open/close state */}
-                            </h2>
-
-                            {/* Collapse component that shows/hides the items */}
+                        <Stack key={category} gap={"xs"}>
+                            <Text fw={600} fs={"xl"} style={{cursor: 'pointer'}} onClick={() => handleCollapseToggle(category)}>
+                                Category: {category} {/* You can add an icon here to indicate open/close state */}
+                            </Text>
 
                             {/*@ts-ignore*/}
                             <CategoryCollapse category={category} items={items} opened={opened} bbbr={data}/>
-                        </div>
+                        </Stack>
                     ))}
                 </Stack>
             </Container>
@@ -441,6 +463,7 @@ export function HomePage() {
             {/*<pre>*/}
             {/*    {JSON.stringify(data, null, 2)}*/}
             {/*</pre>*/}
+            {/*<ColorSchemeToggle/>*/}
         </>
     );
 }
