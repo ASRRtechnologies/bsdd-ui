@@ -1,21 +1,7 @@
-import {ColorSchemeToggle} from '../components/ColorSchemeToggle/ColorSchemeToggle';
-import {
-    ActionIcon,
-    Button,
-    Card,
-    Collapse,
-    Container,
-    Group,
-    HoverCard,
-    Indicator,
-    SimpleGrid,
-    Stack,
-    Text
-} from "@mantine/core";
+import {ActionIcon, Card, Collapse, Container, Group, HoverCard, Indicator, Stack, Text, Tooltip} from "@mantine/core";
 import React, {useEffect, useState} from "react";
-import {IconCheck, IconInbox, IconInfoCircle, IconStereoGlasses} from "@tabler/icons-react";
-// import CategoryCollapse from "../components/CategoryCollapse";
-
+import {IconCheck, IconInfoCircle, IconSearch} from "@tabler/icons-react";
+import {ColorSchemeToggle} from '../components/ColorSchemeToggle/ColorSchemeToggle';
 
 type IfcProductType = 'IfcProduct';
 type IfcClassificationReferenceType = 'IfcClassificationReference';
@@ -114,7 +100,19 @@ const mockData: IfcProduct[] = [
     {
         "type": "IfcSlab",
         "name": "Floor: 23_FL_AT_breedplaatvloer_200 (C35/45)",
+        "description": "",
+        "predefinedType": "FLOOR"
+    },
+    {
+        "type": "IfcSlab",
+        "name": "Floor: 23_FL_AT_breedplaatvloer_200 (C35/45)",
         "description": "breedplaatvloer",
+        "predefinedType": "FLOOR"
+    },
+    {
+        "type": "IfcSlab",
+        "name": "Floor: 23_FL_AT_breedplaatvloer_200 (C35/45)",
+        "description": "",
         "predefinedType": "FLOOR"
     },
     {
@@ -162,22 +160,24 @@ const mockData: IfcProduct[] = [
 ]
 
 function groupBy(array, property) {
-    return array.reduce((acc, item) => {
-        // Get the property value we want to group by
+    const grouped = array.reduce((acc, item) => {
         const key = item[property];
 
-        // If the key doesn't exist yet, create it
         if (!acc[key]) {
             acc[key] = [];
         }
 
-        // Add the current item to the group
         acc[key].push(item);
-
-        // Return the updated accumulator
         return acc;
-    }, {}); // Initial value is an empty object
+    }, {});
+
+    // Sort the keys alphabetically and create a new sorted object
+    return Object.keys(grouped).sort().reduce((acc, key) => {
+        acc[key] = grouped[key];
+        return acc;
+    }, {});
 }
+
 
 export function BsddCard(props: { item: IfcProduct, class: any }) {
     let color = "blue"
@@ -207,16 +207,19 @@ export function BsddCard(props: { item: IfcProduct, class: any }) {
     }
 
     return <Card key={props.item.name}>
-        <Group align={"flex-start"}>
+        <Group align={"flex-start"} justify={"space-between"}>
             <Group my={"auto"}>
                 <Indicator color={color} size={18} mx={"xs"}/>
-
+                <Text>
+                    <div>{truncateText(props.item.name, 50)}</div>
+                </Text>
             </Group>
-            <Text>
+
+            <Group>
+
                 <HoverCard>
                     <HoverCard.Target>
                         <Group>
-                            <div>{truncateText(props.item.name, 50)}</div>
                             <IconInfoCircle/>
                         </Group>
                     </HoverCard.Target>
@@ -225,11 +228,19 @@ export function BsddCard(props: { item: IfcProduct, class: any }) {
                     </HoverCard.Dropdown>
 
                 </HoverCard>
-            </Text>
-            <ActionIcon color={"blue"} size={"md"}><IconStereoGlasses/></ActionIcon>
-            <ActionIcon color={"red"}>
-                <IconCheck/>
-            </ActionIcon>
+                <Tooltip label={"Select all instances"}>
+                    <ActionIcon radius={"xl"}
+                    color={"blue"}>
+                        <IconSearch size={18}/>
+                    </ActionIcon>
+                </Tooltip>
+                <Tooltip label={"Attach to type"}>
+                    <ActionIcon radius={"xl"} color={"green"}>
+                        <IconCheck size={18}/>
+                    </ActionIcon>
+                </Tooltip>
+            </Group>
+
 
             {/*<pre>*/}
             {/*{JSON.stringify(props.class, null, 2)}*/}
@@ -444,13 +455,13 @@ export function HomePage() {
     return (
         <>
             <Container size={"40rem"}>
-                <Stack gap={"xs"}>
-                    <h1>IFC Slab Types</h1>
+                <Stack gap={"xs"} pt={"md"}>
                     {/* Iterate over grouped object */}
                     {Object.entries(grouped).map(([category, items]) => (
                         <Stack key={category} gap={"xs"}>
-                            <Text fw={600} fs={"xl"} style={{cursor: 'pointer'}} onClick={() => handleCollapseToggle(category)}>
-                                Category: {category} {/* You can add an icon here to indicate open/close state */}
+                            <Text fw={600} fs={"xl"} style={{cursor: 'pointer'}}
+                                  onClick={() => handleCollapseToggle(category)}>
+                                {category.length > 0 ? `Description: ${category}` : 'No description'}
                             </Text>
 
                             {/*@ts-ignore*/}
@@ -463,7 +474,7 @@ export function HomePage() {
             {/*<pre>*/}
             {/*    {JSON.stringify(data, null, 2)}*/}
             {/*</pre>*/}
-            {/*<ColorSchemeToggle/>*/}
+            <ColorSchemeToggle/>
         </>
     );
 }
