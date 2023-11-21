@@ -403,7 +403,7 @@ function CategoryCollapse(props: CategoryCollapseProps) {
 
 
 export function HomePage() {
-    const [state, setState] = useState({});
+    const [state, setState] = useState(mockData);
 
     // @ts-ignore
     window.updateSelection = (jsonString) => {
@@ -469,7 +469,7 @@ export function HomePage() {
         return <div>Error: {error}</div>;
     }
     // Assuming you want to group by 'PredefinedType'
-    const grouped = groupBy(mockData, 'description');
+    const grouped = groupBy(state, 'description');
 
 
     return (
